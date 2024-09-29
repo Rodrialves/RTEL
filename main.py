@@ -1,36 +1,35 @@
 import random
 import math
 import matplotlib.pyplot as plt
+import sys
 
-def poisson_arrival_time(lambda_):
-    return -math.log(1.0 - random.random()) / lambda_
+# Define the functions for the simulation
 
-def exponential_duration(mu):
-    return -math.log(1.0 - random.random()) / mu
+def exponential_time(const):
+    return -math.log(1.0 - random.random()) / const
 
-def plot_results(time_data, active_calls_data, total_calls, accepted_calls, dropped_calls, max_capacity, blocking_probability):
-    """Plots the results of the simulation."""
-    plt.figure(figsize=(12, 6))
+def poisson_time(const):
+    return -math.log(1.0 - random.random()) / const
 
-    # Plot number of active calls over time
-    plt.plot(time_data, active_calls_data, label='Active Calls', color='blue')
-    plt.axhline(y=max_capacity, color='red', linestyle='--', label=f'Max Capacity ({max_capacity})')
-    plt.xlabel('Time (units)')
-    plt.ylabel('Number of Active Calls')
-    plt.title(f"Call Traffic Simulation: {total_calls} Total Calls Tried")
-    plt.legend()
+def plot_results(arrival_times, delta, Max):
+    # Create the histogram for arrival times
+    bins = []
+    current_bin = 0
 
-    # Display statistics as text
-    textstr = (f"Total Calls Attempted: {total_calls}\n"
-               f"Accepted Calls: {accepted_calls}\n"
-               f"Dropped Calls: {dropped_calls}\n"
-               f"Blocking Probability: {blocking_probability:.2f}")
-    plt.gcf().text(0.15, 0.65, textstr, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
+    while current_bin < Max:
+        bins.append(current_bin)
+        current_bin += delta
 
-    # Show plot
+    bins.append(Max)  # Ensure the final bin includes values up to Max
+    plt.hist(arrival_times, bins=bins, edgecolor='black')
+    plt.xlabel('Call Arrival Time Duration')
+    plt.ylabel('Number of Occurrences')
+    plt.title('Histogram of Call Arrival Times')
     plt.show()
 
-def call_network_simulation(lambda_, mu, max_capacity, total_calls_target):
+def call_network_simulation_exp(lambda_, mu, max_capacity, total_calls_target, arrival_times):
+
+    print("Running simulation with exponential call duration.")
     current_time = 0
     active_calls = int(random.random() * max_capacity)  # Number of currently active calls
     total_calls = 0  # Total number of call attempts
@@ -43,23 +42,23 @@ def call_network_simulation(lambda_, mu, max_capacity, total_calls_target):
     accepted_calls = 0  # Calls that were accepted and not dropped
 
     # Generate initial call arrival time
-    next_call_arrival = poisson_arrival_time(lambda_)
+    call_time = exponential_time(lambda_)
+    next_call_arrival = call_time
     print(f"First call will arrive at {next_call_arrival:.2f}.")
 
     while total_calls < total_calls_target:
-
-
-
 
         # Check if a new call arrives before any ongoing call ends
             # New call arrives
 
         if next_call_arrival <= current_time:
             total_calls += 1
+            arrival_times.append(call_time)
+
             if active_calls < max_capacity:
                 print(f"Call {total_calls} arrived at {current_time:.2f}.")
                 # Accept the call
-                call_duration = exponential_duration(mu)
+                call_duration = exponential_time(mu)
                 call_end_time = current_time + call_duration
                 events.append(call_end_time)
                 active_calls += 1
@@ -72,7 +71,8 @@ def call_network_simulation(lambda_, mu, max_capacity, total_calls_target):
                 print(f"Call {total_calls} dropped at {current_time:.2f}. Capacity full.")
         
             # Schedule next call arrival
-            next_call_arrival += poisson_arrival_time(lambda_)
+            call_time = exponential_time(lambda_)
+            next_call_arrival = next_call_arrival + call_time
 
         else:
             if events:
@@ -96,16 +96,39 @@ def call_network_simulation(lambda_, mu, max_capacity, total_calls_target):
     print(f"Calls dropped: {dropped_calls}")
     blocking_probability = dropped_calls / total_calls if total_calls > 0 else 0
     print(f"Blocking Probability: {blocking_probability:.2f}") 
-    print(f"Average time of arrival between calls: {current_time / total_calls:.2f}")
+    print(f"Average time of arrival between calls: {sum(arrival_times) / total_calls:.2f}")
+    print(f"Average number of active calls: {current_time / total_calls:.2f}")
+    print(f"Expected number of active calls: {lambda_ / mu:.2f}")
+    print(f"Expected call arrival time: {1 / lambda_:.2f}")
 
-    # Plot the results
-    plot_results(time_data, active_calls_data, total_calls_target, accepted_calls, dropped_calls, max_capacity, blocking_probability)
+def call_network_simulation_poisson(lambda_, mu, max_capacity, total_calls_target, delta, Max):
+    print("Running simulation with Poisson call duration.")
 
-# Parameters
-lambda_ = 0.2
-mu = 0.01
-max_capacity = 100 
-total_calls_target = 10000000
+def main():
 
-# Run the simulation
-call_network_simulation(lambda_, mu, max_capacity, total_calls_target)
+    argv = sys.argv
+
+    if len(argv) != 6:
+        print("Usage: python main.py <lambda> <mu> <max_capacity> <total_calls_target> <mode>")
+        sys.exit(1)
+
+    # Parameters
+    lambda_ = float(argv[1])
+    mu = float(argv[2])
+    max_capacity = int(argv[3])
+    total_calls_target = int(argv[4])
+    mode = argv[5]
+    delta = 1/5 * 1/lambda_
+    Max = 5 * 1/lambda_
+    arrival_times = []
+
+    # Run the simulation
+    if mode == "exp":
+        call_network_simulation_exp(lambda_, mu, max_capacity, total_calls_target, arrival_times)
+        plot_results(arrival_times, delta, Max)
+        print(f"Times: {arrival_times}")
+    elif mode == "poisson":
+        call_network_simulation_poisson(lambda_, mu, max_capacity, total_calls_target, delta, Max)
+
+if __name__ == '__main__':
+    main()
