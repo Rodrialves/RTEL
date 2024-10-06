@@ -18,10 +18,11 @@ To have a set of combination of simulations, alter the `main_auto.py` with the w
 
 ### Results
 
-An compilation of results can be seen in the [Results](https://github.com/Rodrialves/RTEL/tree/main/Results) folder.
+An compilation of results can be seen in the [Results] folder.
 
 
 
 
 
 [M.EEC055]: https://sigarra.up.pt/feup/en/ucurr_geral.ficha_uc_view?pv_ocorrencia_id=540621
+[Results]: https://github.com/Rodrialves/RTEL/tree/main/Results
