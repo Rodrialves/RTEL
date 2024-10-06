@@ -192,7 +192,7 @@ def run_multiple_simulations(lambda_, mu, max_capacity_list, target_list, mode="
 def main():
     lambda_ = 5
     mu = 0.2
-    max_capacity_list = [50, 100, 200]  # Different values of max capacity
+    max_capacity_list = [350]  # Different values of max capacity
     total_calls_target_list_exp = [50, 125, 250, 500, 1250, 2500, 5000, 7500, 10000]  # Total call targets for exponential mode
     max_time_list_poisson = [10, 25, 50, 100, 250, 500, 1000, 1500, 2000]  # Total time for Poisson mode
     delta = 0.001  # Time interval for Poisson mode
