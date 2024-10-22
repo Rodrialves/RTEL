@@ -23,7 +23,7 @@ def poisson_time(delta,const):
         return False
 
 
-def simulation(lambda_, mu, channels, simulation_calls, queue_length, delayed_intervals, max_delay=0.05):
+def simulation(lambda_, mu, channels, simulation_calls, queue_length, delayed_intervals, max_delay=0.00005):
     """
     This function simulates a call center using a queueing model.
     Parameters:
@@ -145,11 +145,11 @@ def plot_results(delayed_intervals, delta, Max, filename=None, channels=None, qu
 
 lambda_ = 200  # Arrival rate: calls per time unit
 mu = 1/0.008   # Service rate: calls handled per time unit
-channels = 1 # Number of channels in the system
+channels = 6 # Number of channels in the system
 simulation_calls = 100000
 queue_length = 0 #queue length, 0 for Erlang-B, -1 for Erlang-C and any other intenger for the general case
 V_min = 1/8 *  1/lambda_ # for ploting the results
-Max = 2 * 1/lambda_ # for ploting the results
+Max = 20 * 1/lambda_ # for ploting the results
 delayed_intervals = [] #for Erlang-C
 data=[]
 
@@ -198,6 +198,7 @@ delays = []
 c=8 #maximal number of channels to be iterated from 1 to c
 sl=20 #maximal queue length size to be iterated from 1 to sl
 
+#Run the simulation for different number of channels and queue lengths to find the values which gives a 1% of packet loss
 with open("simulation_results.csv", "w") as fileopen:
     
     fileopen.write("Lambda, mu, Channel Capacity, Queue Length, Delayed Probability,Average Delay,Service Level,Bloking Probability\n")
@@ -216,13 +217,12 @@ with open("simulation_results.csv", "w") as fileopen:
                 average_blocking_prob.append(data[3])
 
             print("Blocking probability: {:.4f}".format(np.average(average_blocking_prob)))
-            #plot_results(delays, V_min, Max, f"plot_channels-{j}_queues-{k}.png")
             fileopen.write("{:.2f},{:.2f},{},{},{:.2f},{:.2f},{:.6f},{:.4f}\n".format(lambda_, mu, k, j, sum(average_delay_prob)/(n-1), np.average(average_delay), sum(average_srv_lvl)/(n-1), np.average(average_blocking_prob)))
             average_delay_prob.clear()
             average_delay.clear()
             average_srv_lvl.clear()
             average_blocking_prob.clear()
 
-#If you want to plot the results, uncomment the following lines
+#If you want to plot the results into a histogram, uncomment the following lines
 #filename = f"plot_channels-{channels}_queues-{queue_length}.png"
 #plot_results(delayed_intervals, V_min, Max, filename, channels, queue_length)
