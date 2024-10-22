@@ -23,7 +23,7 @@ def poisson_time(delta,const):
         return False
 
 
-def simulation(lambda_, mu, channels, simulation_calls, queue_length, delayed_intervals, max_delay=0.5):
+def simulation(lambda_, mu, channels, simulation_calls, queue_length, delayed_intervals, max_delay=0.05):
     """
     This function simulates a call center using a queueing model.
     Parameters:
@@ -93,22 +93,23 @@ def simulation(lambda_, mu, channels, simulation_calls, queue_length, delayed_in
                 events.append(Event("departure", time + exponential_time(mu))) #we can only generate a new departure when we free space in our channel, this is when a departure happens
             else: # If there are no waiting calls, free a channel
                 channels_occupied -= 1
+    
     #For Erlang-B
     blocking_prob = blocked_calls / total_calls
     #For Erlang-C   
     over_Am = 0
     if(queue_length!=0):
         delayed_prob = delayed_calls / total_calls    
-        average_delay = sum(delayed_intervals) / total_calls
+        average_delay = sum(delayed_intervals) / total_calls #all the delays divided by the total number of calls
         for delay in delayed_intervals:
             if(delay<max_delay):
                 over_Am +=1
         prob_over_Am =  over_Am / len(delayed_intervals)
-        return delayed_prob, average_delay, prob_over_Am
+        return delayed_prob, average_delay, prob_over_Am, blocking_prob
     else:#return blocking probability
         return blocking_prob
     
-def plot_results(delayed_intervals, delta, Max, filename=None):
+def plot_results(delayed_intervals, delta, Max, filename=None, channels=None, queue_length=None):
     bins = []
     current_bin = 0
 
@@ -124,12 +125,19 @@ def plot_results(delayed_intervals, delta, Max, filename=None):
     x = np.linspace(0, Max, 1000)
     y = len(delayed_intervals) * lambda_ * np.exp(-lambda_ * x) * delta  # Scale the y-values to match the histogram
     plt.plot(x, y, 'r-', lw=2, label='Exponential Distribution')
+   
 
     plt.xlabel('Delay Time Intervals')
     plt.ylabel('Number of Calls')
-    plt.title('Histogram of Delay Packets')
+    plt.title(f'Channels: {channels}', fontsize=10)
+    plt.suptitle('Histogram of Delay Packets', fontsize=12)
     plt.legend()
-    plt.show()
+    
+    if(filename == None): # Show the plot if no filename is given
+        plt.show()
+    else: # Save the plot before showing it
+        plt.savefig(filename)
+        plt.close()
     
 ##############################
 ############ MAIN ############
@@ -137,54 +145,84 @@ def plot_results(delayed_intervals, delta, Max, filename=None):
 
 lambda_ = 200  # Arrival rate: calls per time unit
 mu = 1/0.008   # Service rate: calls handled per time unit
-channels = 2 # Number of channels in the system
-simulation_calls = 10000
-queue_length = 10 #queue length, 0 for Erlang-B, -1 for Erlang-C and any other intenger for the general case
-V_min = 1/2 *  1/lambda_ # for ploting the results
-Max = 20 * 1/lambda_ # for ploting the results
+channels = 1 # Number of channels in the system
+simulation_calls = 100000
+queue_length = 0 #queue length, 0 for Erlang-B, -1 for Erlang-C and any other intenger for the general case
+V_min = 1/8 *  1/lambda_ # for ploting the results
+Max = 2 * 1/lambda_ # for ploting the results
 delayed_intervals = [] #for Erlang-C
 data=[]
-
-print("=============================================================")
-
-
-print("Channels: ", channels, " Queue Length: ", queue_length)
 
 average_delay_prob = []
 average_delay = []
 average_srv_lvl = []
-n=15
-sl=20
-c=6
+
+n=15 #number of simulations to get more accurate results
+
+print("\n=============================================================\n")
+print("Testing Erlang-B with different number of channels:")
+for channels in range(1, 9):
+    print("\tRunning simulation with parameters: \n\tLambda: ", lambda_, "\n\tmu:", mu,"\n\tChannel Capacity: ", channels,"\n\tQueue length:" , 0) 
+    data=simulation( lambda_, mu, channels, simulation_calls, 0, delayed_intervals, max_delay=0.05)
+                
+    if(queue_length==0):
+        print("\t\tBlocking probability: ", data*100, "%")
+print("\n=============================================================\n")
+
+print("Testing Erlang-C with different number of channels:")
+queue_length=-1
+for channels in range(1, 9):
+    print("\tRunning simulation with parameters: \n\tLambda: ", lambda_, "\n\tmu:", mu,"\n\tChannel Capacity: ", channels,"\n\tQueue length:" , queue_length)     
+    for i in range(1,n):
+        print("\t\tSimulation ", i)
+        delayed_intervals.clear()
+        data=(simulation( lambda_, mu, channels, simulation_calls, queue_length, delayed_intervals))
+        #delays.extend(delayed_intervals)
+        average_delay_prob.append(data[0])
+        average_delay.append(data[1])
+        average_srv_lvl.append(data[2])
+    if(queue_length==-1):
+        print("\tProbability that a packet is delayed: {:.2f}%".format(data[0]*100))
+        print("\tAverage Delay: ", data[1])
+        print("\tService Level: {:.2f}%".format(data[2]*100))
+    average_delay_prob.clear()
+    average_delay.clear()
+    average_srv_lvl.clear()
+# print("=============================================================")
+print("\n=============================================================\n")
+#print("Channels: ", channels, " Queue Length: ", queue_length)
+
+
+average_blocking_prob = []
+delays = []
+c=8 #maximal number of channels to be iterated from 1 to c
+sl=20 #maximal queue length size to be iterated from 1 to sl
+
 with open("simulation_results.csv", "w") as fileopen:
     
-    fileopen.write("Lambda, mu, Channel Capacity, Queue Length, Delayed Probability,Average Delay,Service Level,\n")
+    fileopen.write("Lambda, mu, Channel Capacity, Queue Length, Delayed Probability,Average Delay,Service Level,Bloking Probability\n")
 
-    # for k in range(1,sl):
-    #     for j in range(1,c):
-    #         print("Running ", n, " simulations with parameters: \n\tLambda: ", lambda_, "\n\tmu:", mu,"\n\tChannel Capacity: ", j,"\n\tQueue length:" , k)
-    #         for i in range(1,n):
-    #             data=(simulation( lambda_, mu, j, simulation_calls, k, delayed_intervals))
-    #             average_delay_prob.append(data[0])
-    #             average_delay.append(data[1])
-    #             average_srv_lvl.append(data[2])
-            
-    #         fileopen.write("{:.2f},{:.2f},{},{},{:.2f},{:.2f},{:.2f}\n".format(lambda_, mu, j, k, sum(average_delay_prob)/(n-1), np.average(average_delay), sum(average_srv_lvl)/(n-1)))
-                
-    #         average_delay_prob.clear()
-    #         average_delay.clear()
-    #         average_srv_lvl.clear()
-    
-    simulation( lambda_, mu, channels, simulation_calls, queue_length, delayed_intervals, max_delay=0.05)
-            
-if(queue_length==0):
-    print("\tBlocking probability: ", data*100, "%")
-# else:
-#     print("\tProbability that a packet is delayed: {:.2f}%".format(sum(average_delay_prob)/n*100), "+-", np.std(average_delay_prob))
-#     print("\tAverage Delay: ", sum(average_delay)/n, "+-", np.std(average_delay))
-#     print("\tService Level: {:.2f}%".format(sum(average_srv_lvl)/n *100),"+-", np.std(average_srv_lvl))
-    
-print("=============================================================")
+    for k in range(1,c):
+        for j in range(1,sl):
+            print("Running ", n, " simulations with parameters: \n\tLambda: ", lambda_, "\n\tmu:", mu,"\n\tChannel Capacity: ", k,"\n\tQueue length:" , j)
+            delays.clear()
+            for i in range(1,n):
+                delayed_intervals.clear()
+                data=(simulation( lambda_, mu, k, simulation_calls, j, delayed_intervals))
+                #delays.extend(delayed_intervals)
+                average_delay_prob.append(data[0])
+                average_delay.append(data[1])
+                average_srv_lvl.append(data[2])
+                average_blocking_prob.append(data[3])
 
-if(queue_length!=0):
-    plot_results(delayed_intervals, V_min, Max)
+            print("Blocking probability: {:.4f}".format(np.average(average_blocking_prob)))
+            #plot_results(delays, V_min, Max, f"plot_channels-{j}_queues-{k}.png")
+            fileopen.write("{:.2f},{:.2f},{},{},{:.2f},{:.2f},{:.6f},{:.4f}\n".format(lambda_, mu, k, j, sum(average_delay_prob)/(n-1), np.average(average_delay), sum(average_srv_lvl)/(n-1), np.average(average_blocking_prob)))
+            average_delay_prob.clear()
+            average_delay.clear()
+            average_srv_lvl.clear()
+            average_blocking_prob.clear()
+
+#If you want to plot the results, uncomment the following lines
+#filename = f"plot_channels-{channels}_queues-{queue_length}.png"
+#plot_results(delayed_intervals, V_min, Max, filename, channels, queue_length)
