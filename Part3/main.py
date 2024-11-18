@@ -2,11 +2,13 @@
 # and every variable with an "s" is for the area specific operators
 
 import random
-from functions import Calls as f, Event 
+from functions import Calls as f, Plot as p
 
 
 #DEBUG = True #Set to TRUE to print debug information
 DEBUG = False #Set to FALSE to not print debug information
+
+PLOT = False #Set to TRUE to plot the results
 ##############################
 ######### Simulation #########
 ##############################
@@ -123,6 +125,8 @@ def simulation(lambda_=80/3600, Ng=10, Ns=5, Nq=5, sim_calls=13440):
             "\n Average waiting time of general purpose calls: {:.2f} seconds.".format(aver_g_time),
             "\n Average time between arrival to General Purpose system and being answered by Area Specific system: {:.2f} seconds.".format(aver_g_2_s)) 
     
+    if PLOT:
+        p.plot_results(waiting_g_intervals, 10, max(waiting_g_intervals), "General Purpose System Waiting Times", "Time (s)")
    
     
     

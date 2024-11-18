@@ -67,7 +67,7 @@ class Calls:
 
 
 class Plot:
-    def plot_results(arrival_times, delta, Max, filename=None):
+    def plot_results(arrival_times, delta, Max, Title, xlabel):
         bins = []
         current_bin = 0
 
@@ -78,20 +78,18 @@ class Plot:
         bins.append(Max)  # Ensure the final bin includes values up to Max
         plt.hist(arrival_times, bins=bins, edgecolor='black', alpha=0.6, color='g')
 
-        # Plot the exponential distribution
-        lambda_ = 1 / (sum(arrival_times) / len(arrival_times))  # Estimate lambda from the data
-        x = np.linspace(0, Max, 1000)
-        y = len(arrival_times) * lambda_ * np.exp(-lambda_ * x) * delta  # Scale the y-values to match the histogram
-        plt.plot(x, y, 'r-', lw=2, label='Exponential Distribution')
+        # Plot the gaussian distribution distribution
+        mu = np.mean(arrival_times)
+        sigma = np.std(arrival_times)
+        x = np.linspace(min(arrival_times), max(arrival_times), 100)
+        y = (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+        plt.plot(x, y * len(arrival_times) * delta, color='r', label='Gaussian Distribution')
 
-        plt.xlabel('Call Arrival Time')
+        plt.xlabel(xlabel)
         plt.ylabel('Number of Calls')
-        plt.title('Histogram of Call Arrival Times')
+        plt.title(Title)
         plt.legend()
-
-        if(filename == None): # Show the plot if no filename is given
-            plt.show()
-        else: # Save the plot before showing it
-            plt.savefig(filename)
-            plt.close()
+        plt.show()
+        
+    
             
