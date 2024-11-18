@@ -2,7 +2,7 @@ import random
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-import funtions as f
+import functions as f
 
 queue_size = 5 #value for testing
 lambda_ = 80/3600 #FIX (Its in calls/hour)

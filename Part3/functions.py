@@ -22,11 +22,11 @@ class Calls:
 
         return Event("arrival", call_type, time+Calls.exponential_time(lambda_))
     
-    def generate_departure(time, goal_system, event_type="normal"): #Generate a departure event
+    def generate_departure(time, goal_system, event_type="normal", ): #Generate a departure event
         if goal_system == "general": #If the call is general, generate a general purpose call duration
             return Event("departure", "general", time+Calls.calculate_general_purpose())
         elif (goal_system == "area_specific" and event_type=="normal"): #If the call is area specific, generate an area specific call duration
-            return Event("departure", "area_specific", time+Calls.calculate_area_specific_gaussian_call())
+            return Event("departure", "area_specific", time +Calls.calculate_area_specific_gaussian_call())
         elif (goal_system == "area_specific" and event_type=="transition"): #If the call is area specific, generate an area specific call duration
             return Event("transition", "area_specific", time+Calls.calculate_area_specific_call())
         
