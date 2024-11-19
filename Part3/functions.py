@@ -89,7 +89,7 @@ class Plot:
         plt.xlabel(xlabel)
         plt.ylabel('Number of Calls')
         plt.title(Title)
-        plt.legend()
+        #plt.legend()
         plt.show()
         
     

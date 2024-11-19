@@ -8,7 +8,7 @@ import pandas as pd
 
 PRINTRESULTS = True #Set to TRUE to print the results, FALSE otherwise
 DEBUG = False #Set to FALSE to not print debug information, TRUE otherwise
-PLOT = False #Set to TRUE to plot the results, FALSE otherwise
+PLOT = True #Set to TRUE to plot the results, FALSE otherwise
 CHECK_SPECIFICATIONS = False #Set to TRUE to check which values comply with the specifications, FALSE otherwise
 ##############################
 ######### Simulation #########
@@ -69,7 +69,7 @@ def simulation(lambda_=80/3600, Ng=10, Ns=5, Nq=5, sim_calls=13440):
         
         #Process the event
         if event.event_type == "arrival":
-            pred=len(waiting_g_queue)*avg_waiting_time[-1] if len(avg_waiting_time)>0 else 0
+            pred=(len(waiting_g_queue)+1)*avg_waiting_time[-1] if (channels_g_occupied==Ng) else 0
             prediction_list.append(Prediction(event.id, pred, 0))
             if PRINTRESULTS:   
                 if(pred>0):
@@ -142,7 +142,7 @@ def simulation(lambda_=80/3600, Ng=10, Ns=5, Nq=5, sim_calls=13440):
             if len(waiting_s_queue) > 0: #If there are waiting calls, start service
                 arrival = waiting_s_queue.pop(0)
                 waiting_s_intervals.append(time-arrival.time)
-                events.append(f.generate_departure(event.id, time, "area_specific","transition"))
+                events.append(f.generate_departure(arrival.id, time, "area_specific","transition"))
             else: #If there are no waiting calls, free one channel
                 channels_s_occupied -= 1
                     
@@ -155,6 +155,23 @@ def simulation(lambda_=80/3600, Ng=10, Ns=5, Nq=5, sim_calls=13440):
         aver_g_time=0
     aver_g_2_s = sum(waiting_s_intervals)/total_s_calls
     
+    
+    prediction_error = []
+    abs_pred_error = []
+    rel_pred_error = []
+    for pred in prediction_list:
+        if pred.real != 0 and pred.pred != 0:
+            prediction_error.append(pred.pred - pred.real)
+        abs_pred_error.append(abs(pred.pred - pred.real))
+        rel_pred_error.append(abs(pred.pred - pred.real)/pred.real if pred.real!=0 else 0)
+        
+    avg_absolute_error = sum(abs_pred_error)/len(abs_pred_error)
+    avg_relative_error = sum(rel_pred_error)/len(rel_pred_error)
+            
+    if PLOT:    
+        print(len(prediction_error))
+        p.plot_results(waiting_g_intervals, 2, max(waiting_g_intervals), "General Purpose System Waiting Times", "Time (s)")
+        p.plot_results(prediction_error, 2, max(prediction_error), "Prediction Error", "Time (s)")
     if PRINTRESULTS:
         print("=====================================================================",
             "\nSimulation ended with the following results:", "\n", "Total Number of calls.", total_calls,
@@ -162,11 +179,9 @@ def simulation(lambda_=80/3600, Ng=10, Ns=5, Nq=5, sim_calls=13440):
                 "\n Number of delayed general purpose calls: {:.0f};".format(delayed_g_calls), "Probability of delay: {:.2f} %.".format(p_delayed_g_calls*100),
                 "\n Number of delayed area specific calls: {:.0f}.".format(delayed_s_calls),
                 "\n Average waiting time of general purpose calls: {:.2f} seconds.".format(aver_g_time),
-                "\n Average time between arrival to General Purpose system and being answered by Area Specific system: {:.2f} seconds.".format(aver_g_2_s)) 
-    
-    if PLOT:
-        p.plot_results(waiting_g_intervals, 10, max(waiting_g_intervals), "General Purpose System Waiting Times", "Time (s)")
-    
+                "\n Average time between arrival to General Purpose system and being answered by Area Specific system: {:.2f} seconds.".format(aver_g_2_s),
+                "\n Absolute prediction error: {:.2f} seconds.".format(avg_absolute_error), 
+                "\n Relative prediction error: {:.2f} %.".format(avg_relative_error*100))
     
     print("=====================================================================")
     
