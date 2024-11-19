@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Event:
+    id: int
     event_type : str #arrival, departure, transition or specific_departure
     goal_system : str #general or area_specific
     time : float #time in which the event occurs or the duration of the call
@@ -17,18 +18,18 @@ class Calls:
         return -math.log(1.0 - random.random()) / const
     
     
-    def generate_arrival(time, lambda_): #Generate an arrival event
+    def generate_arrival(id,time, lambda_): #Generate an arrival event
         call_type = random.choices(['general', 'area_specific'], weights=[0.3, 0.7])[0] #Choose the call type, with 30% being general and 70% being area specific
 
-        return Event("arrival", call_type, time+Calls.exponential_time(lambda_))
+        return Event(id,"arrival", call_type, time+Calls.exponential_time(lambda_))
     
-    def generate_departure(time, goal_system, event_type="normal", ): #Generate a departure event
+    def generate_departure(id,time, goal_system, event_type="normal", ): #Generate a departure event
         if goal_system == "general": #If the call is general, generate a general purpose call duration
-            return Event("departure", "general", time+Calls.calculate_general_purpose())
+            return Event(id,"departure", "general", time+Calls.calculate_general_purpose())
         elif (goal_system == "area_specific" and event_type=="normal"): #If the call is area specific, generate an area specific call duration
-            return Event("departure", "area_specific", time +Calls.calculate_area_specific_gaussian_call())
+            return Event(id,"departure", "area_specific", time +Calls.calculate_area_specific_gaussian_call())
         elif (goal_system == "area_specific" and event_type=="transition"): #If the call is area specific, generate an area specific call duration
-            return Event("transition", "area_specific", time+Calls.calculate_area_specific_call())
+            return Event(id,"transition", "area_specific", time+Calls.calculate_area_specific_call())
         
 
     
@@ -79,11 +80,11 @@ class Plot:
         plt.hist(arrival_times, bins=bins, edgecolor='black', alpha=0.6, color='g')
 
         # Plot the gaussian distribution distribution
-        mu = np.mean(arrival_times)
-        sigma = np.std(arrival_times)
-        x = np.linspace(min(arrival_times), max(arrival_times), 100)
-        y = (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
-        plt.plot(x, y * len(arrival_times) * delta, color='r', label='Gaussian Distribution')
+        # mu = np.mean(arrival_times)
+        # sigma = np.std(arrival_times)
+        # x = np.linspace(min(arrival_times), max(arrival_times), 100)
+        # y = (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+        # plt.plot(x, y * len(arrival_times) * delta, color='r', label='Gaussian Distribution')
 
         plt.xlabel(xlabel)
         plt.ylabel('Number of Calls')
