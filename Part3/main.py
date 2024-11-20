@@ -6,10 +6,12 @@ from functions import Calls as f, Plot as p
 from dataclasses import dataclass
 import pandas as pd
 
-PRINTRESULTS = True #Set to TRUE to print the results, FALSE otherwise
+PRINTRESULTS = False #Set to TRUE to print the results, FALSE otherwise
 DEBUG = False #Set to FALSE to not print debug information, TRUE otherwise
-PLOT = True #Set to TRUE to plot the results, FALSE otherwise
+PLOT = False #Set to TRUE to plot the results, FALSE otherwise
 CHECK_SPECIFICATIONS = False #Set to TRUE to check which values comply with the specifications, FALSE otherwise
+SENSITIVITY = False #Set to TRUE to run the sensitivity analysis, FALSE otherwise
+
 ##############################
 ######### Simulation #########
 ##############################
@@ -196,7 +198,7 @@ lambda_ = 80/3600 #FIX (Its in calls/hour); Arrival rate: calls per time unit
 Ng = 1 #Number of general purpose operators
 Ns = 1 #Number of area specific operators
 Nq = 5 #Queue size
-sim_calls = 100000 #Number of calls to simulate
+sim_calls = 10000 #Number of calls to simulate
 
 results = []
 
@@ -222,13 +224,20 @@ Ng = 4
 Ns = 5
 Nq = 2
 
-# # results.clear()
-
 simulation(lambda_, Ng, Ns, Nq, sim_calls)  
 
 # run the simulation multiple times to get confidence intervals
-# for i in range(40):
-#     results.append(simulation(lambda_, Ng, Ns, Nq, sim_calls))
+if SENSITIVITY:
+    lambda_ = 100/3600
+    for i in range(30):
+        print(f"iteration {i}")
+        results.append(simulation(lambda_, Ng, Ns, Nq))
+    sum = 0
+    for result in results:
+        sum = sum + round(result.avg_g2s_time, 2)
+
+    with open("results.txt", "a") as l:
+        l.write(f"{lambda_*3600}, {sum/30}\n")
 
 
     
