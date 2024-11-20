@@ -168,7 +168,7 @@ def simulation(lambda_=80/3600, Ng=10, Ns=5, Nq=5, sim_calls=13440):
         rel_pred_error.append(abs(pred.pred - pred.real)/pred.real if pred.real!=0 else 0)
         
     avg_absolute_error = sum(abs_pred_error)/len(abs_pred_error)
-    avg_relative_error = sum(rel_pred_error)/len(rel_pred_error)
+    avg_relative_error = 1 - sum(rel_pred_error)/len(rel_pred_error)
             
     if PLOT:    
         print(len(prediction_error))
